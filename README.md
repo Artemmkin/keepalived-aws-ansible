@@ -11,7 +11,7 @@ slave_ip_address:
 VIP:  # instance's secondary IP address
 VIP_subnet: 20 # CIDR netmask of a subnet the VIP belongs to
 ```
-You'll alsoe need to change variables in **var/main.yml**:
+You'll also need to change variables in **var/main.yml**:
 ```
 aws_access_key:
 aws_secret_key:

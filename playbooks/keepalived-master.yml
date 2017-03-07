@@ -1,0 +1,11 @@
+---
+
+- hosts: keepalived-master
+  gather_facts: false
+  become: yes
+
+  vars:
+    keepalived_role: "MASTER"
+    
+  roles:
+    - keepalived

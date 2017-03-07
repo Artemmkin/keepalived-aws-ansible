@@ -1,0 +1,16 @@
+# Configuration file for dnsmasq.
+#
+
+domain-needed
+bogus-priv
+no-resolv
+
+interface={{ dnsmasq_listen_iface }}
+
+{% for entry in domain_dict %}
+  address=/{{ entry.domain_name }}/{{ entry.address }}
+{% endfor %}
+
+{% for entry in upstream_servers %}
+  server={{ entry }}
+{% endfor %}

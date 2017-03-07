@@ -1,0 +1,4 @@
+---
+
+- include: playbooks/keepalived-master.yml
+- include: playbooks/keepalived-backup.yml

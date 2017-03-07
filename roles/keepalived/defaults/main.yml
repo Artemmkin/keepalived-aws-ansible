@@ -1,0 +1,32 @@
+---
+# defaults file for keepalived
+
+keepalived_role: BACKUP
+
+version: 1.3.0
+
+# private IP addresses of ec2 instances
+master_ip_address:
+slave_ip_address:
+
+VIP:  # instance's secondary IP address
+VIP_subnet: 20 # CIDR netmask of a subnet the VIP belongs to
+
+priority_master: 101
+priority_slave: 100
+
+keepalived_shared_iface: eth0
+keepalived_router_id: 1
+
+interval: 2
+fall: 2
+rise: 2
+
+## dnsmasq configuration
+domain_dict:
+  - {domain_name: "blah.blah.com", address: "1.1.1.1"}
+  - {domain_name: "test.test.com", address: "2.2.2.2"}
+
+upstream_servers: ["8.8.8.8"]
+
+dnsmasq_listen_iface: eth0

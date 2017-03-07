@@ -1,0 +1,34 @@
+! Configuration File for keepalived
+
+vrrp_script chk_service {
+       script "/etc/keepalived/test-dnsmasq.sh"
+       interval {{ interval }}                      # check every 2 seconds
+       fall {{ fall }}
+       rise {{ rise }}
+       weight -5 # if subtracted from master's priority the number should be less than backup's priority
+
+}
+
+vrrp_instance VI_1 {
+   state {{ keepalived_role }}
+   interface {{ keepalived_shared_iface }}
+   virtual_router_id {{ keepalived_router_id }}
+   {% if keepalived_role.lower() == "master" %}
+   priority {{ priority_master }}
+   unicast_src_ip {{ master_ip_address  }} # private IP of the host
+   unicast_peer {
+      {{ slave_ip_address }} # peer IP
+   }
+   {% else %}
+   priority {{ priority_slave }}
+   unicast_src_ip {{ slave_ip_address  }}
+   unicast_peer {
+      {{ master_ip_address }} # peer IP
+   }
+   {% endif %}
+
+   track_script {
+       chk_service
+   }
+   notify_master /etc/keepalived/master.sh
+}

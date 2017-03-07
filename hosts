@@ -1,0 +1,5 @@
+[hosts]
+
+keepalived-master ansible_host= ansible_user=ubuntu
+
+keepalived-backup ansible_host= ansible_user=ubuntu

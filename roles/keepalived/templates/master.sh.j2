@@ -1,0 +1,10 @@
+#!/bin/bash
+
+VIP={{ VIP }}
+
+Instance_ID=`/usr/bin/curl --silent http://169.254.169.254/latest/meta-data/instance-id`
+
+ENI_ID=`aws ec2 describe-instances --instance-ids $Instance_ID | grep eni -m 1 | awk '{print $2;}'`
+ENI=`echo ${ENI_ID::-1} | tr -d '"'`
+
+aws ec2 assign-private-ip-addresses --network-interface-id $ENI --private-ip-addresses $VIP --allow-reassignment

@@ -1,0 +1,107 @@
+---
+
+- name: Check if secondary IP was added
+  shell: "ip addr list dev eth0 | grep {{ VIP }} > /dev/null"
+  changed_when: no
+  ignore_errors: yes
+  register: check_ip
+
+- name: Add secondary IP address
+  template:
+    src: eth0.cfg.j2
+    dest: /etc/network/interfaces.d/eth0.cfg
+    mode: 0644
+
+- name: Add secondary IP directly # to avoid reloading ifaces
+  command: "ip addr add {{ VIP }}/{{ VIP_subnet }} dev eth0"
+  when: "{{ check_ip.rc }} != 0"
+
+- name: install dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - gcc
+    - libssl-dev
+    - make
+    - python-pip
+
+- name: Install aws cli
+  pip:
+    name: awscli
+
+- name: Create directory for aws credentials
+  file:
+    path: ~/.aws
+    state: directory
+    mode: 0755
+
+- name: Create aws cli config file
+  template:
+    src: aws_cli_config.j2
+    dest: ~/.aws/config
+    mode: 0600
+
+- name: Get Keepalived
+  get_url:
+    url: "http://www.keepalived.org/software/keepalived-{{ version }}.tar.gz"
+    dest: "/tmp/keepalived-{{ version }}.tar.gz"
+
+- unarchive:
+    src: "/tmp/keepalived-{{ version }}.tar.gz"
+    dest: /tmp
+    remote_src: yes
+
+- name: Check if the service is already installed
+  command: service keepalived status
+  register: check_if_installed
+  ignore_errors: yes
+  changed_when: no
+
+- name: Build keepalived
+  shell: ./configure && make && make install
+  args:
+    chdir: "/tmp/keepalived-{{ version }}"
+  when: "{{ check_if_installed.rc }}"
+
+- name: Create keepalived dir
+  file:
+    path: /etc/keepalived
+    state: directory
+    mode: 0755
+
+- name: Copy init file
+  copy:
+    src: "/tmp/keepalived-{{ version }}/keepalived/etc/init.d/keepalived"
+    dest: /etc/init.d/keepalived
+    mode: 0751
+    remote_src: yes
+
+- name: Copy init file
+  copy:
+    src: "/tmp/keepalived-{{ version }}/keepalived/etc/init/keepalived.conf"
+    dest: /etc/init/keepalived.conf
+    mode: 0644
+    remote_src: yes
+
+- name: Copy script for testing dnsmasq availability
+  copy:
+    src: test-dnsmasq.sh
+    dest: /etc/keepalived/test-dnsmasq.sh
+    mode: 0755
+
+- name: Copy script for VIP swapping
+  template:
+     src: master.sh.j2
+     dest: /etc/keepalived/master.sh
+     mode: 0755
+
+- name: Copy configuration file for keepalived
+  template:
+     src: keepalived.conf.j2
+     dest: /etc/keepalived/keepalived.conf
+     mode: 0644
+
+- name: Configure Keepalived to start on boot
+  service: name=keepalived enabled=yes state=started
